@@ -106,16 +106,11 @@ void upload()
 	if (answer == ques)
 	{
 		score++;
-		btBeepFlag = ~btBeepFlag;
-		delay(600);
-		btBeepFlag = ~btBeepFlag;
 		if (score == 15)
 		{
-			btBeepFlag = ~btBeepFlag;
-			delay(600);
-			btBeepFlag = ~btBeepFlag;
 			highest_sc = score;
 			highest_er = player;
+			score=0;
 		}
 	}
 	else
@@ -125,9 +120,9 @@ void upload()
 			highest_sc = score;
 			highest_er = player;
 		}
-		btBeepFlag = ~btBeepFlag;
+		/*btBeepFlag = ~btBeepFlag;
 		delay(600);
-		btBeepFlag = ~btBeepFlag;
+		btBeepFlag = ~btBeepFlag;*/
 		score = 0;
 	}
 }
