@@ -246,7 +246,7 @@ void main()
 			if (sbtKey1 == 0)
 			{
 				while( !sbtKey1 );
-				uiLed = uiLed | tmpLed;
+				upload();
 			}
 		}
 		if (sbtKey2 == 0)
@@ -255,7 +255,7 @@ void main()
 			if (sbtKey2 == 0)
 			{
 				while( !sbtKey2 );
-                upload();
+                uiLed = uiLed ^ tmpLed;
 			}
 		}
     }
