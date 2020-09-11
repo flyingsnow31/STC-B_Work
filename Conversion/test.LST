@@ -1,4 +1,4 @@
-C51 COMPILER V9.51   TEST                                                                  09/11/2020 20:51:47 PAGE 1   
+C51 COMPILER V9.51   TEST                                                                  09/11/2020 21:18:19 PAGE 1   
 
 
 C51 COMPILER V9.51, COMPILATION OF MODULE TEST
@@ -10,678 +10,724 @@ line level    source
    1          #include <STC15F2K60S2.H>
    2          #include <intrins.h>
    3          #include <stdlib.h>
-   4          #define uint unsigned int
-   5          #define uchar unsigned char
-   6          
-   7          /*---------宏定义---------*/
+   4          
+   5          /*---------宏定义---------*/
+   6          #define uint unsigned int
+   7          #define uchar unsigned char
    8          #define cstAdcPower 0X80   /*ADC电源开关*/
    9          #define cstAdcFlag 0X10    /*当A/D转换完成后，cstAdcFlag要软件清零*/
   10          #define cstAdcStart 0X08   /*当A/D转换完成后，cstAdcStart会自动清零，所以要开始下一次转换，则需要置位*/
   11          #define cstAdcSpeed90 0X60 /*ADC转换速度 90个时钟周期转换一次*/
   12          #define cstAdcChs17 0X07   /*选择P1.7作为A/D输入*/
   13          
-  14          uchar arrSegSelect[] = {0x3f, 0x06, 0x5b, 0x4f, 0x66, 0x6d, 0x7d, 0x07, 0x7f, 0x6f, 0x77, 0x7c, 0x39, 0x5e
-             -, 0x79, 0x71, 0x00, 0x38, 0x74, 0x67, 0xa7, 0x77, 0x79};
-  15          uchar arrDigitSelect[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07}; //数码管0-7
-  16          uint arrPrintSelect[] = {16, 16, 16, 16, 16, 16, 16, 16};
-  17          /*---------引脚别名定义---------*/
-  18          sbit sbtLedSel = P2 ^ 3; //数码管与LED灯切换引脚
-  19          sbit SDA = P4 ^ 0;               //I2C总线的数据线
-  20          sbit SCL = P5 ^ 5;               //I2C总线的时钟线
-  21          sbit sbtBeep = P3 ^ 4;   //蜂鸣器引脚
-  22          
-  23          /*---------变量定义---------*/
-  24          uchar uiLed = 0x00;               //LED灯值寄存
-  25          uchar tmpLed = 0x01;      //LED灯值暂存
-  26          uchar i = 0;                      //数码管扫描显示循环
-  27          uint answer = 0;                  //答案
-  28          uint score = 0;                   //得分
-  29          uint highest_sc = 0;      //最高分
-  30          uint highest_er = 0;      //最高分玩家
-  31          uint player = 0;                  //当前游戏玩家
-  32          uint ques = 0;                    //问题
-  33          uint ques0, ques1, ques2; //问题
-  34          uint ques_flag = 0;               //问题标志
-  35          uchar option = 0x00;      //选项
-  36          uint back = 0;                    //回退标志
-  37          
-  38          /*---------引脚别名定义---------*/
-  39          sbit sbtKey1 = P3 ^ 2; //按键1引脚
-  40          sbit sbtKey2 = P3 ^ 3;
-  41          sbit sbtKey3 = P1 ^ 7;
-  42          
-  43          /*---------延时子函数--------*/
-  44          void delay(uint n)
-  45          {
-  46   1              while (n--)
-  47   1                      ;
-  48   1      }
-  49          void delay_ms(uint n)
-  50          {
-  51   1              while (n)
-  52   1              {
-  53   2                      uchar i, j;
-  54   2                      i = 11;
-C51 COMPILER V9.51   TEST                                                                  09/11/2020 20:51:47 PAGE 2   
+  14          /*---------统一使用的表单---------*/
+  15          //数码管段选信号
+  16          //0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
+  17          //0 1 2 3 4 5 6 7 8 9 A  B  C  D  E  F  空 L  h  q  ?   
+  18          uchar arrSegSelect[] = {0x3f, 0x06, 0x5b, 0x4f, 0x66, 0x6d, 0x7d, 0x07, 0x7f, 0x6f, 0x77, 0x7c, 0x39, 0x5e
+             -, 0x79, 0x71, 0x00, 0x38, 0x74, 0x67, 0xa7};
+  19          //数码管位选信号
+  20          uchar arrDigitSelect[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07}; //数码管0-7
+  21          //数码管显示表单
+  22          uint arrPrintSelect[] = {16, 16, 16, 16, 16, 16, 16, 16};
+  23          
+  24          /*---------引脚别名定义---------*/
+  25          sbit sbtLedSel = P2 ^ 3;        //数码管与LED灯切换引脚
+  26          sbit SDA = P4 ^ 0;                      //I2C总线的数据线
+  27          sbit SCL = P5 ^ 5;                      //I2C总线的时钟线
+  28          sbit sbtBeep = P3 ^ 4;          //蜂鸣器引脚
+  29          sbit sbtKey1 = P3 ^ 2;          //按键1引脚
+  30          sbit sbtKey2 = P3 ^ 3;          //按键2引脚
+  31          sbit sbtKey3 = P1 ^ 7;          //按键3引脚
+  32          
+  33          /*---------变量定义---------*/
+  34          uchar uiLed = 0x00;               //LED灯值寄存
+  35          uchar tmpLed = 0x01;      //LED灯值暂存
+  36          uchar i = 0;                      //数码管扫描显示循环
+  37          uint answer = 0;                  //答案
+  38          uint score = 0;                   //得分
+  39          uint highest_sc = 0;      //最高分
+  40          uint highest_er = 0;      //最高分玩家
+  41          uint player = 0;                  //当前游戏玩家
+  42          uint ques = 0;                    //问题
+  43          uint ques0, ques1, ques2; //问题
+  44          uint ques_flag = 0;               //问题标志
+  45          uchar option = 0x00;      //选项
+  46          uint back = 0;                    //回退标志
+  47          uchar addr = 0x00;                //地址
+  48          
+  49          /*---------延时子函数--------*/
+  50          void delay(uint n)              //通用延时
+  51          {
+  52   1              while (n--)
+  53   1                      ;
+  54   1      }
+C51 COMPILER V9.51   TEST                                                                  09/11/2020 21:18:19 PAGE 2   
 
-  55   2                      j = 190;
-  56   2                      do
-  57   2                      {
-  58   3                              while (--j)
-  59   3                                      ;
-  60   3                      } while (--i);
-  61   2                      n--;
-  62   2              }
-  63   1      }
-  64          void delay4() //延时4us
-  65          {
-  66   1              ;
-  67   1              ;
-  68   1      }
-  69          void IIC_init() //I2C总线初始化
-  70          {
-  71   1              SCL = 1;
-  72   1              delay4();
-  73   1              SDA = 1;
-  74   1              delay4();
-  75   1      }
-  76          void start() //主机启动信号
-  77          {
-  78   1              SDA = 1;
-  79   1              delay4();
-  80   1              SCL = 1;
-  81   1              delay4();
-  82   1              SDA = 0;
-  83   1              delay4();
-  84   1      }
-  85          void stop() //停止信号
-  86          {
-  87   1              SDA = 0;
-  88   1              delay4();
-  89   1              SCL = 1;
-  90   1              delay4();
-  91   1              SDA = 1;
-  92   1              delay4();
-  93   1      }
-  94          void respons() //从机应答信号
-  95          {
-  96   1              uchar i = 0;
-  97   1              SCL = 1;
-  98   1              delay4();
-  99   1              while (SDA == 1 && (i < 255)) //表示若在一段时间内没有收到从器件的应答则
- 100   1                      i++;                                      //主器件默认从期间已经收到数据而不再等待应答信号。
- 101   1              SCL = 0;
+  55          void delay_ms(uint n)   //延时n毫秒
+  56          {
+  57   1              while (n)
+  58   1              {
+  59   2                      uchar i, j;
+  60   2                      i = 11;
+  61   2                      j = 190;
+  62   2                      do
+  63   2                      {
+  64   3                              while (--j)
+  65   3                                      ;
+  66   3                      } while (--i);
+  67   2                      n--;
+  68   2              }
+  69   1      }
+  70          void delay4()                   //延时4us
+  71          {
+  72   1              ;
+  73   1              ;
+  74   1      }
+  75          
+  76          //I2C总线初始化
+  77          void IIC_init() 
+  78          {
+  79   1              SCL = 1;
+  80   1              delay4();
+  81   1              SDA = 1;
+  82   1              delay4();
+  83   1      }
+  84          
+  85          //主机启动信号
+  86          void start() 
+  87          {
+  88   1              SDA = 1;
+  89   1              delay4();
+  90   1              SCL = 1;
+  91   1              delay4();
+  92   1              SDA = 0;
+  93   1              delay4();
+  94   1      }
+  95          
+  96          //停止信号
+  97          void stop() 
+  98          {
+  99   1              SDA = 0;
+ 100   1              delay4();
+ 101   1              SCL = 1;
  102   1              delay4();
- 103   1      }
- 104          void writebyte(uchar date) //对24C02写一个字节数据
- 105          {
- 106   1              uchar i, temp;
- 107   1              temp = date;
- 108   1              for (i = 0; i < 8; i++)
- 109   1              {
- 110   2                      temp = temp << 1;
- 111   2                      SCL = 0;
- 112   2                      delay4();
- 113   2                      SDA = CY;
- 114   2                      delay4();
- 115   2                      SCL = 1;
- 116   2                      delay4();
-C51 COMPILER V9.51   TEST                                                                  09/11/2020 20:51:47 PAGE 3   
+ 103   1              SDA = 1;
+ 104   1              delay4();
+ 105   1      }
+ 106          
+ 107          //从机应答信号
+ 108          void respons() 
+ 109          {
+ 110   1              uchar i = 0;
+ 111   1              SCL = 1;
+ 112   1              delay4();
+ 113   1              while (SDA == 1 && (i < 255)) //表示若在一段时间内没有收到从器件的应答则
+ 114   1                      i++;                                      //主器件默认从期间已经收到数据而不再等待应答信号。
+ 115   1              SCL = 0;
+ 116   1              delay4();
+C51 COMPILER V9.51   TEST                                                                  09/11/2020 21:18:19 PAGE 3   
 
- 117   2              }
- 118   1              SCL = 0;
- 119   1              delay4();
- 120   1              SDA = 1;
- 121   1              delay4();
- 122   1      }
- 123          uchar readbyte() //从24C02读一个字节数据
- 124          {
- 125   1              uchar i, k;
- 126   1              SCL = 0;
- 127   1              delay4();
- 128   1              SDA = 1;
- 129   1              delay4();
- 130   1              for (i = 0; i < 8; i++)
- 131   1              {
- 132   2                      SCL = 1;
- 133   2                      delay4();
- 134   2                      k = (k << 1) | SDA;
- 135   2                      delay4();
- 136   2                      SCL = 0;
- 137   2                      delay4();
- 138   2              }
- 139   1              delay4();
- 140   1              return k;
- 141   1      }
- 142          void write_add(uchar addr, uchar date) //对24C02的地址addr，写入一个数据date
- 143          {
- 144   1              start();
- 145   1              writebyte(0xa0);
- 146   1              respons();
- 147   1              writebyte(addr);
- 148   1              respons();
- 149   1              writebyte(date);
- 150   1              respons();
- 151   1              stop();
- 152   1      }
- 153          uchar read_add(uchar addr) //从24C02的addr地址，读一个字节数据
- 154          {
- 155   1              uchar date;
- 156   1              start();
- 157   1              writebyte(0xa0);
- 158   1              respons();
- 159   1              writebyte(addr);
- 160   1              respons();
- 161   1              start();
- 162   1              writebyte(0xa1);
- 163   1              respons();
- 164   1              date = readbyte();
- 165   1              stop();
- 166   1              return date;
- 167   1      }
- 168          int game_back();
- 169          void upload()
- 170          {
- 171   1              uiLed = 0x00;
- 172   1              tmpLed = 0x01;
- 173   1              ques_flag = 0;
- 174   1              answer = P0;
- 175   1              if (answer == ques)
- 176   1              {
- 177   2                      score++;
- 178   2                      if (score == 15)
-C51 COMPILER V9.51   TEST                                                                  09/11/2020 20:51:47 PAGE 4   
+ 117   1      }
+ 118          
+ 119          //对24C02写一个字节数据
+ 120          void writebyte(uchar date) 
+ 121          {
+ 122   1              uchar i, temp;
+ 123   1              temp = date;
+ 124   1              for (i = 0; i < 8; i++)
+ 125   1              {
+ 126   2                      temp = temp << 1;
+ 127   2                      SCL = 0;
+ 128   2                      delay4();
+ 129   2                      SDA = CY;
+ 130   2                      delay4();
+ 131   2                      SCL = 1;
+ 132   2                      delay4();
+ 133   2              }
+ 134   1              SCL = 0;
+ 135   1              delay4();
+ 136   1              SDA = 1;
+ 137   1              delay4();
+ 138   1      }
+ 139          
+ 140          //从24C02读一个字节数据
+ 141          uchar readbyte() 
+ 142          {
+ 143   1              uchar i, k;
+ 144   1              SCL = 0;
+ 145   1              delay4();
+ 146   1              SDA = 1;
+ 147   1              delay4();
+ 148   1              for (i = 0; i < 8; i++)
+ 149   1              {
+ 150   2                      SCL = 1;
+ 151   2                      delay4();
+ 152   2                      k = (k << 1) | SDA;
+ 153   2                      delay4();
+ 154   2                      SCL = 0;
+ 155   2                      delay4();
+ 156   2              }
+ 157   1              delay4();
+ 158   1              return k;
+ 159   1      }
+ 160          
+ 161          //对24C02的地址addr，写入一个数据date
+ 162          void write_add(uchar addr, uchar date) 
+ 163          {
+ 164   1              start();
+ 165   1              writebyte(0xa0);
+ 166   1              respons();
+ 167   1              writebyte(addr);
+ 168   1              respons();
+ 169   1              writebyte(date);
+ 170   1              respons();
+ 171   1              stop();
+ 172   1      }
+ 173          
+ 174          //从24C02的addr地址，读一个字节数据
+ 175          uchar read_add(uchar addr) 
+ 176          {
+ 177   1              uchar date;
+ 178   1              start();
+C51 COMPILER V9.51   TEST                                                                  09/11/2020 21:18:19 PAGE 4   
 
- 179   2                      {
- 180   3                              highest_sc = score;
- 181   3                              highest_er = player;
- 182   3                              write_add(player + 2, score);
- 183   3                              write_add(0, score);
- 184   3                              write_add(1, player);
- 185   3                              score = 0;
- 186   3                      }
- 187   2              }
- 188   1              else
- 189   1              {
- 190   2                      if (score > highest_sc)
- 191   2                      {
- 192   3                              highest_sc = score;
- 193   3                              highest_er = player;
- 194   3                              write_add(0, score);
- 195   3                              write_add(1, player);
- 196   3                      }
- 197   2                      /*btBeepFlag = ~btBeepFlag;
- 198   2                      delay(600);
- 199   2                      btBeepFlag = ~btBeepFlag;*/
- 200   2                      write_add(player + 2, score);
- 201   2                      score = 0;
- 202   2              }
- 203   1      }
- 204          
- 205          /*---------获取AD值子函数--------*/
- 206          unsigned char GetADC()
- 207          {
- 208   1              uchar ucAdcRes;
- 209   1              ADC_CONTR = cstAdcPower | cstAdcStart | cstAdcSpeed90 | cstAdcChs17; //没有将cstAdcFlag置1，用于判断A/D是
+ 179   1              writebyte(0xa0);
+ 180   1              respons();
+ 181   1              writebyte(addr);
+ 182   1              respons();
+ 183   1              start();
+ 184   1              writebyte(0xa1);
+ 185   1              respons();
+ 186   1              date = readbyte();
+ 187   1              stop();
+ 188   1              return date;
+ 189   1      }
+ 190          
+ 191          int game_back();
+ 192          
+ 193          //上传函数 游戏中确定后对答案进行上传和比对，结果存入存储器
+ 194          void upload()
+ 195          {
+ 196   1              uiLed = 0x00;
+ 197   1              tmpLed = 0x01;
+ 198   1              ques_flag = 0;
+ 199   1              answer = P0;
+ 200   1              addr=player+2;
+ 201   1              if (answer == ques)             //答案正确
+ 202   1              {
+ 203   2                      score++;
+ 204   2                      if (score == 15)
+ 205   2                      {
+ 206   3                              highest_sc = score;
+ 207   3                              highest_er = player;
+ 208   3                              write_add(0, score);
+ 209   3                              delay_ms(5);
+ 210   3                              write_add(1, player);
+ 211   3                              delay_ms(5);
+ 212   3                              write_add(player + 2, score);
+ 213   3                              delay_ms(5);
+ 214   3                              score = 0;
+ 215   3                      }
+ 216   2                      
+ 217   2              }
+ 218   1              else                                    //错误
+ 219   1              {
+ 220   2                      if (score > highest_sc)
+ 221   2                      {
+ 222   3                              highest_sc = score;
+ 223   3                              highest_er = player;
+ 224   3                              write_add(0, score);
+ 225   3                              delay_ms(5);
+ 226   3                              write_add(1, player);
+ 227   3                              delay_ms(5);
+ 228   3                      }
+ 229   2                      
+ 230   2                      write_add(addr, score);
+ 231   2                      delay_ms(5);
+ 232   2                      score = 0;
+ 233   2              }
+ 234   1      }
+ 235          
+ 236          /*---------获取AD值子函数--------*/
+ 237          unsigned char GetADC()
+ 238          {
+ 239   1              uchar ucAdcRes;
+ 240   1              ADC_CONTR = cstAdcPower | cstAdcStart | cstAdcSpeed90 | cstAdcChs17; //没有将cstAdcFlag置1，用于判断A/D是
+C51 COMPILER V9.51   TEST                                                                  09/11/2020 21:18:19 PAGE 5   
+
              -否结束
- 210   1              _nop_();
- 211   1              _nop_();
- 212   1              _nop_();
- 213   1              _nop_();
- 214   1              while (!(ADC_CONTR & cstAdcFlag))
- 215   1                      ;                                         //等待直到A/D转换结束
- 216   1              ADC_CONTR &= ~cstAdcFlag; //cstAdcFlagE软件清0
- 217   1              ucAdcRes = ADC_RES;               //获取AD的值
- 218   1              return ucAdcRes;
- 219   1      }
- 220          
- 221          /*---------获取导航按键值子函数--------*/
- 222          uchar NavKeyCheck()
- 223          {
- 224   1              unsigned char key;
- 225   1              key = GetADC(); //获取AD的值
- 226   1              if (key != 255) //有按键按下时
- 227   1              {
- 228   2                      delay(200);
- 229   2                      key = GetADC();
- 230   2                      if (key != 255) //按键消抖 仍有按键按下
- 231   2                      {
- 232   3                              key = key & 0xE0;         //获取高3位，其他位清零
- 233   3                              key = _cror_(key, 5); //循环右移5位 获取A/D转换高三位值，减小误差
- 234   3                              return key;
- 235   3                      }
- 236   2              }
- 237   1              return 0x07; //没有按键按下时返回值0x07
- 238   1      }
- 239          
-C51 COMPILER V9.51   TEST                                                                  09/11/2020 20:51:47 PAGE 5   
+ 241   1              _nop_();
+ 242   1              _nop_();
+ 243   1              _nop_();
+ 244   1              _nop_();
+ 245   1              while (!(ADC_CONTR & cstAdcFlag))
+ 246   1                      ;                                         //等待直到A/D转换结束
+ 247   1              ADC_CONTR &= ~cstAdcFlag; //cstAdcFlagE软件清0
+ 248   1              ucAdcRes = ADC_RES;               //获取AD的值
+ 249   1              return ucAdcRes;
+ 250   1      }
+ 251          
+ 252          /*---------获取导航按键值子函数--------*/
+ 253          uchar NavKeyCheck()
+ 254          {
+ 255   1              unsigned char key;
+ 256   1              key = GetADC(); //获取AD的值
+ 257   1              if (key != 255) //有按键按下时
+ 258   1              {
+ 259   2                      delay(200);
+ 260   2                      key = GetADC();
+ 261   2                      if (key != 255) //按键消抖 仍有按键按下
+ 262   2                      {
+ 263   3                              key = key & 0xE0;         //获取高3位，其他位清零
+ 264   3                              key = _cror_(key, 5); //循环右移5位 获取A/D转换高三位值，减小误差
+ 265   3                              return key;
+ 266   3                      }
+ 267   2              }
+ 268   1              return 0x07; //没有按键按下时返回值0x07
+ 269   1      }
+ 270          
+ 271          /*---------导航按键处理子函数--------*/
+ 272          void NavKey_Process()
+ 273          {
+ 274   1              uchar ucNavKeyCurrent; //导航按键当前的状态
+ 275   1              uchar ucNavKeyPast;        //导航按键前一个状态
+ 276   1      
+ 277   1              ucNavKeyCurrent = NavKeyCheck(); //获取当前ADC值
+ 278   1              if (ucNavKeyCurrent != 0x07)     //导航按键是否被按下 不等于0x07表示有按下
+ 279   1              {
+ 280   2                      ucNavKeyPast = ucNavKeyCurrent;
+ 281   2                      while (ucNavKeyCurrent != 0x07) //等待导航按键松开
+ 282   2                              ucNavKeyCurrent = NavKeyCheck();
+ 283   2      
+ 284   2                      switch (ucNavKeyPast)
+ 285   2                      {
+ 286   3                      case 0x00: //里
+ 287   3                              if (tmpLed == 0x00)
+ 288   3                                      tmpLed = 0x01;
+ 289   3                              else
+ 290   3                                      tmpLed = tmpLed & 0x00;
+ 291   3                              break;
+ 292   3                      case 0x01:                              //上键：显示的数字加1
+ 293   3                              if (tmpLed == 0x01) //value等于0x80时，重新赋初值0x01
+ 294   3                                      tmpLed = 0x80;
+ 295   3                              else
+ 296   3                                      tmpLed = tmpLed >> 1;
+ 297   3                              break;
+ 298   3                      case 0x04:                              //下键：显示的数字减1
+ 299   3                              if (tmpLed == 0x80) //value等于0x80时，重新赋初值0x01
+ 300   3                                      tmpLed = 0x01;
+ 301   3                              else
+C51 COMPILER V9.51   TEST                                                                  09/11/2020 21:18:19 PAGE 6   
 
- 240          /*---------导航按键处理子函数--------*/
- 241          void NavKey_Process()
- 242          {
- 243   1              uchar ucNavKeyCurrent; //导航按键当前的状态
- 244   1              uchar ucNavKeyPast;        //导航按键前一个状态
- 245   1      
- 246   1              ucNavKeyCurrent = NavKeyCheck(); //获取当前ADC值
- 247   1              if (ucNavKeyCurrent != 0x07)     //导航按键是否被按下 不等于0x07表示有按下
- 248   1              {
- 249   2                      ucNavKeyPast = ucNavKeyCurrent;
- 250   2                      while (ucNavKeyCurrent != 0x07) //等待导航按键松开
- 251   2                              ucNavKeyCurrent = NavKeyCheck();
- 252   2      
- 253   2                      switch (ucNavKeyPast)
- 254   2                      {
- 255   3                      case 0x00: //里
- 256   3                              if (tmpLed == 0x00)
- 257   3                                      tmpLed = 0x01;
- 258   3                              else
- 259   3                                      tmpLed = tmpLed & 0x00;
- 260   3                              break;
- 261   3                      case 0x01:                              //上键：显示的数字加1
- 262   3                              if (tmpLed == 0x01) //value等于0x80时，重新赋初值0x01
- 263   3                                      tmpLed = 0x80;
- 264   3                              else
- 265   3                                      tmpLed = tmpLed >> 1;
- 266   3                              break;
- 267   3                      case 0x04:                              //下键：显示的数字减1
- 268   3                              if (tmpLed == 0x80) //value等于0x80时，重新赋初值0x01
- 269   3                                      tmpLed = 0x01;
- 270   3                              else
- 271   3                                      tmpLed = tmpLed << 1;
- 272   3                              break;
- 273   3                      case 0x02:
- 274   3                              back = game_back();
- 275   3                              break;
- 276   3                      }
- 277   2              }
- 278   1      
- 279   1              delay(1000);
- 280   1      }
- 281          
- 282          void question()
- 283          {
- 284   1              ques = rand() % 256;
- 285   1              ques0 = ques % 10;
- 286   1              ques1 = ques / 10 % 10;
- 287   1              ques2 = ques / 100 % 10;
- 288   1      }
- 289          
- 290          void clear()
- 291          {
- 292   1              for (i = 0; i < 8; i++)
- 293   1                      arrPrintSelect[i] = 16;
- 294   1      }
- 295          
- 296          void print()
- 297          {
- 298   1              for (i = 0; i < 8; i++)
- 299   1              {
- 300   2                      P0 = 0;
- 301   2                      P2 = arrDigitSelect[i];                           //选择数码管的位数
-C51 COMPILER V9.51   TEST                                                                  09/11/2020 20:51:47 PAGE 6   
-
- 302   2                      P0 = arrSegSelect[arrPrintSelect[i]]; //显示对应的数值
- 303   2                      delay_ms(1);
- 304   2              }
- 305   1      }
- 306          
- 307          void print_game()
- 308          {
- 309   1              clear();
- 310   1              arrPrintSelect[0] = highest_sc;
- 311   1              arrPrintSelect[3] = score;
- 312   1              arrPrintSelect[5] = ques2;
- 313   1              arrPrintSelect[6] = ques1;
- 314   1              arrPrintSelect[7] = ques0;
- 315   1      }
- 316          
- 317          void print_manu()
- 318          {
- 319   1              clear();
- 320   1              if (option == 0x00) //GO
- 321   1              {
- 322   2                      arrPrintSelect[0] = 0;
- 323   2                      arrPrintSelect[4] = 9;
- 324   2                      arrPrintSelect[5] = 0;
- 325   2              }
- 326   1              else if (option == 0x01)
- 327   1              {
- 328   2                      arrPrintSelect[0] = 1;
- 329   2                      arrPrintSelect[4] = 17;
- 330   2                      arrPrintSelect[5] = 1;
- 331   2                      arrPrintSelect[6] = 5;
- 332   2                      arrPrintSelect[7] = 7;
- 333   2              }
- 334   1              else
- 335   1              {
- 336   2                      arrPrintSelect[0] = 2;
- 337   2                      arrPrintSelect[6] = 21;
- 338   2                      arrPrintSelect[7] = 22;
- 339   2              }
- 340   1      }
- 341          
- 342          void print_list()
+ 302   3                                      tmpLed = tmpLed << 1;
+ 303   3                              break;
+ 304   3                      case 0x02:
+ 305   3                              back = game_back();
+ 306   3                              break;
+ 307   3                      }
+ 308   2              }
+ 309   1      
+ 310   1              delay(1000);
+ 311   1      }
+ 312          
+ 313          /*---------问题--------*/
+ 314          void question()
+ 315          {
+ 316   1              ques = rand() % 256;
+ 317   1              ques0 = ques % 10;
+ 318   1              ques1 = ques / 10 % 10;
+ 319   1              ques2 = ques / 100 % 10;
+ 320   1      }
+ 321          
+ 322          /*---------清屏--------*/
+ 323          void clear()
+ 324          {
+ 325   1              for (i = 0; i < 8; i++)
+ 326   1                      arrPrintSelect[i] = 16;
+ 327   1      }
+ 328          
+ 329          /*---------通用输出--------*/
+ 330          void print()
+ 331          {
+ 332   1              for (i = 0; i < 8; i++)
+ 333   1              {
+ 334   2                      P0 = 0;
+ 335   2                      P2 = arrDigitSelect[i];                           //选择数码管的位数
+ 336   2                      P0 = arrSegSelect[arrPrintSelect[i]]; //显示对应的数值
+ 337   2                      delay_ms(1);
+ 338   2              }
+ 339   1      }
+ 340          
+ 341          /*---------游戏输出--------*/
+ 342          void print_game()
  343          {
  344   1              clear();
- 345   1              if (option == 0x00) //high
- 346   1              {
- 347   2                      arrPrintSelect[0] = 18;
- 348   2                      arrPrintSelect[1] = 1;
- 349   2                      arrPrintSelect[2] = 9;
- 350   2                      arrPrintSelect[3] = 18;
- 351   2                      arrPrintSelect[5] = highest_er;
- 352   2                      arrPrintSelect[7] = highest_sc;
- 353   2              }
- 354   1              else
- 355   1              {
- 356   2                      arrPrintSelect[0] = 17;
- 357   2                      arrPrintSelect[1] = 1;
- 358   2                      arrPrintSelect[2] = 5;
- 359   2                      arrPrintSelect[3] = 7;
- 360   2                      arrPrintSelect[5] = option - 1;
- 361   2                      arrPrintSelect[7] = read_add(option + 1);
- 362   2              }
- 363   1      }
-C51 COMPILER V9.51   TEST                                                                  09/11/2020 20:51:47 PAGE 7   
+ 345   1              arrPrintSelect[0] = highest_sc;
+ 346   1              arrPrintSelect[3] = score;
+ 347   1              arrPrintSelect[5] = ques2;
+ 348   1              arrPrintSelect[6] = ques1;
+ 349   1              arrPrintSelect[7] = ques0;
+ 350   1      }
+ 351          
+ 352          /*---------菜单输出--------*/
+ 353          void print_manu()
+ 354          {
+ 355   1              clear();
+ 356   1              if (option == 0x00) //GO
+ 357   1              {
+ 358   2                      arrPrintSelect[0] = 0;
+ 359   2                      arrPrintSelect[4] = 9;
+ 360   2                      arrPrintSelect[5] = 0;
+ 361   2              }
+ 362   1              else if (option == 0x01)
+ 363   1              {
+C51 COMPILER V9.51   TEST                                                                  09/11/2020 21:18:19 PAGE 7   
 
- 364          
- 365          void print_login()
- 366          {
- 367   1              clear();
- 368   1              arrPrintSelect[2] = 1;
- 369   1              arrPrintSelect[3] = 13;
- 370   1              arrPrintSelect[7] = player;
- 371   1      }
- 372          
- 373          void print_back()
- 374          {
- 375   1              clear();
- 376   1              arrPrintSelect[6] = 19;
- 377   1              arrPrintSelect[7] = 20;
- 378   1      }
- 379          
- 380          int game_back()
- 381          {
- 382   1              while (1)
+ 364   2                      arrPrintSelect[0] = 1;
+ 365   2                      arrPrintSelect[4] = 17;
+ 366   2                      arrPrintSelect[5] = 1;
+ 367   2                      arrPrintSelect[6] = 5;
+ 368   2                      arrPrintSelect[7] = 7;
+ 369   2              }
+ 370   1              else
+ 371   1              {
+ 372   2                      arrPrintSelect[0] = 2;
+ 373   2                      arrPrintSelect[6] = 10;
+ 374   2                      arrPrintSelect[7] = 14;
+ 375   2              }
+ 376   1      }
+ 377          
+ 378          /*---------排行榜输出--------*/
+ 379          void print_list()
+ 380          {
+ 381   1              clear();
+ 382   1              if (option == 0x00) //high
  383   1              {
- 384   2                      sbtLedSel = 0;
- 385   2                      print_back();
- 386   2                      print();
- 387   2                      if (sbtKey1 == 0)
- 388   2                      {
- 389   3                              delay_ms(5); //延时消抖
- 390   3                              if (sbtKey1 == 0)
- 391   3                              {
- 392   4                                      while (!sbtKey1)
- 393   4                                              ;
- 394   4                                      {
- 395   5                                              return 1;
- 396   5                                      }
- 397   4                              }
- 398   3                      }
- 399   2                      if (sbtKey2 == 0)
- 400   2                      {
- 401   3                              delay_ms(5); //延时消抖
- 402   3                              if (sbtKey2 == 0)
- 403   3                              {
- 404   4                                      while (!sbtKey2)
- 405   4                                              ;
- 406   4                                      {
- 407   5                                              return 0;
- 408   5                                      }
- 409   4                              }
- 410   3                      }
- 411   2              }
- 412   1      }
- 413          
- 414          void game()
- 415          {
- 416   1              clear();
- 417   1              while (1)
- 418   1              {
- 419   2                      sbtLedSel = 0;
- 420   2                      if (ques_flag == 0)
- 421   2                      {
- 422   3                              question();
- 423   3                              ques_flag = 1;
- 424   3                      }
- 425   2                      print_game();
-C51 COMPILER V9.51   TEST                                                                  09/11/2020 20:51:47 PAGE 8   
+ 384   2                      arrPrintSelect[0] = 18;
+ 385   2                      arrPrintSelect[1] = 1;
+ 386   2                      arrPrintSelect[2] = 9;
+ 387   2                      arrPrintSelect[3] = 18;
+ 388   2                      arrPrintSelect[5] = highest_er;
+ 389   2                      arrPrintSelect[7] = highest_sc;
+ 390   2              }
+ 391   1              else
+ 392   1              {
+ 393   2                      arrPrintSelect[0] = 17;
+ 394   2                      arrPrintSelect[1] = 1;
+ 395   2                      arrPrintSelect[2] = 5;
+ 396   2                      arrPrintSelect[3] = 7;
+ 397   2                      arrPrintSelect[5] = option - 1;
+ 398   2                      arrPrintSelect[7] = read_add(option + 1);
+ 399   2                      delay_ms(5);
+ 400   2              }
+ 401   1      }
+ 402          
+ 403          /*---------登录界面输出--------*/
+ 404          void print_login()
+ 405          {
+ 406   1              clear();
+ 407   1              arrPrintSelect[2] = 1;
+ 408   1              arrPrintSelect[3] = 13;
+ 409   1              arrPrintSelect[7] = player;
+ 410   1      }
+ 411          
+ 412          /*---------问号输出--------*/
+ 413          void print_back()
+ 414          {
+ 415   1              clear();
+ 416   1              arrPrintSelect[6] = 19;
+ 417   1              arrPrintSelect[7] = 20;
+ 418   1      }
+ 419          
+ 420          /*---------返回--------*/
+ 421          int game_back()
+ 422          {
+ 423   1              while (1)
+ 424   1              {
+ 425   2                      sbtLedSel = 0;
+C51 COMPILER V9.51   TEST                                                                  09/11/2020 21:18:19 PAGE 8   
 
- 426   2                      print();
- 427   2                      sbtLedSel = 1;
- 428   2                      P0 = 0;
- 429   2                      P0 = uiLed | tmpLed; //LED显示
- 430   2                      delay_ms(1);
- 431   2                      NavKey_Process(); //获取按键按下情况
- 432   2                      if (sbtKey1 == 0)
- 433   2                      {
- 434   3                              delay_ms(5); //延时消抖
- 435   3                              if (sbtKey1 == 0)
- 436   3                              {
- 437   4                                      while (!sbtKey1)
- 438   4                                              ;
- 439   4                                      upload();
- 440   4                              }
- 441   3                      }
- 442   2                      if (sbtKey2 == 0)
- 443   2                      {
- 444   3                              delay_ms(5); //延时消抖
- 445   3                              if (sbtKey2 == 0)
- 446   3                              {
- 447   4                                      while (!sbtKey2)
- 448   4                                              ;
- 449   4                                      uiLed = uiLed ^ tmpLed;
+ 426   2                      print_back();
+ 427   2                      print();
+ 428   2                      if (sbtKey1 == 0)
+ 429   2                      {
+ 430   3                              delay_ms(5); //延时消抖
+ 431   3                              if (sbtKey1 == 0)
+ 432   3                              {
+ 433   4                                      while (!sbtKey1)
+ 434   4                                              ;
+ 435   4                                      {
+ 436   5                                              return 1;
+ 437   5                                      }
+ 438   4                              }
+ 439   3                      }
+ 440   2                      if (sbtKey2 == 0)
+ 441   2                      {
+ 442   3                              delay_ms(5); //延时消抖
+ 443   3                              if (sbtKey2 == 0)
+ 444   3                              {
+ 445   4                                      while (!sbtKey2)
+ 446   4                                              ;
+ 447   4                                      {
+ 448   5                                              return 0;
+ 449   5                                      }
  450   4                              }
  451   3                      }
- 452   2                      if (back == 1)
- 453   2                              return;
- 454   2      
- 455   2                      //后加退出方法
- 456   2              }
- 457   1      }
- 458          
- 459          /*---------注册--------*/
- 460          void login()
- 461          {
- 462   1              option = 0x00;
- 463   1              back = 0;
- 464   1              while (1)
- 465   1              {
- 466   2                      sbtLedSel = 0;
- 467   2                      print_login();
+ 452   2              }
+ 453   1      }
+ 454          
+ 455          /*---------游戏主函数--------*/
+ 456          void game()
+ 457          {
+ 458   1              clear();
+ 459   1              while (1)
+ 460   1              {
+ 461   2                      sbtLedSel = 0;
+ 462   2                      if (ques_flag == 0)
+ 463   2                      {
+ 464   3                              question();
+ 465   3                              ques_flag = 1;
+ 466   3                      }
+ 467   2                      print_game();
  468   2                      print();
- 469   2                      if (sbtKey1 == 0)
- 470   2                      {
- 471   3                              delay_ms(5); //延时消抖
- 472   3                              if (sbtKey1 == 0)
- 473   3                              {
- 474   4                                      while (!sbtKey1)
- 475   4                                              ;
- 476   4                                      {
- 477   5                                              game();
- 478   5                                              return;
- 479   5                                      }
- 480   4                              }
- 481   3                      }
- 482   2                      if (sbtKey2 == 0)
- 483   2                      {
- 484   3                              delay_ms(5); //延时消抖
- 485   3                              if (sbtKey2 == 0)
- 486   3                              {
- 487   4                                      while (!sbtKey2)
-C51 COMPILER V9.51   TEST                                                                  09/11/2020 20:51:47 PAGE 9   
+ 469   2                      sbtLedSel = 1;
+ 470   2                      P0 = 0;
+ 471   2                      P0 = uiLed | tmpLed; //LED显示
+ 472   2                      delay_ms(1);
+ 473   2                      NavKey_Process(); //获取按键按下情况
+ 474   2                      if (sbtKey1 == 0)
+ 475   2                      {
+ 476   3                              delay_ms(5); //延时消抖
+ 477   3                              if (sbtKey1 == 0)
+ 478   3                              {
+ 479   4                                      while (!sbtKey1)
+ 480   4                                              ;
+ 481   4                                      upload();
+ 482   4                              }
+ 483   3                      }
+ 484   2                      if (sbtKey2 == 0)
+ 485   2                      {
+ 486   3                              delay_ms(5); //延时消抖
+ 487   3                              if (sbtKey2 == 0)
+C51 COMPILER V9.51   TEST                                                                  09/11/2020 21:18:19 PAGE 9   
 
- 488   4                                              ;
- 489   4                                      if (player == 15)
- 490   4                                              player = 0;
- 491   4                                      else
- 492   4                                              player++;
- 493   4                                      //next
- 494   4                              }
- 495   3                      }
- 496   2              }
- 497   1      }
- 498          
- 499          /*---------排行--------*/
- 500          void list()
- 501          {
- 502   1              option = 0x00;
- 503   1              while (1)
- 504   1              {
- 505   2                      sbtLedSel = 0;
- 506   2                      print_list();
- 507   2                      print();
- 508   2                      if (sbtKey1 == 0)
- 509   2                      {
- 510   3                              delay_ms(5); //延时消抖
- 511   3                              if (sbtKey1 == 0)
- 512   3                              {
- 513   4                                      while (!sbtKey1)
- 514   4                                              ;
- 515   4                                      {
- 516   5                                              option = 0x00;
- 517   5                                              break;
- 518   5                                      }
- 519   4                              }
- 520   3                      }
- 521   2                      if (sbtKey2 == 0)
- 522   2                      {
- 523   3                              delay_ms(5); //延时消抖
- 524   3                              if (sbtKey2 == 0)
- 525   3                              {
- 526   4                                      while (!sbtKey2)
- 527   4                                              ;
- 528   4                                      if (option == 0x10)
- 529   4                                              option = 0x00;
- 530   4                                      else
- 531   4                                              option++;
- 532   4                                      //next
- 533   4                              }
- 534   3                      }
- 535   2              }
- 536   1      }
- 537          
- 538          void restart()
- 539          {
- 540   1              clear();
- 541   1              while (1)
- 542   1              {
- 543   2                      sbtLedSel = 0;
- 544   2                      print_back();
- 545   2                      print();
- 546   2                      if (sbtKey1 == 0)
- 547   2                      {
- 548   3                              delay_ms(5); //延时消抖
- 549   3                              if (sbtKey1 == 0)
-C51 COMPILER V9.51   TEST                                                                  09/11/2020 20:51:47 PAGE 10  
+ 488   3                              {
+ 489   4                                      while (!sbtKey2)
+ 490   4                                              ;
+ 491   4                                      uiLed = uiLed ^ tmpLed;
+ 492   4                              }
+ 493   3                      }
+ 494   2                      if (back == 1)
+ 495   2                              return;
+ 496   2      
+ 497   2                      //后加退出方法
+ 498   2              }
+ 499   1      }
+ 500          
+ 501          /*---------注册--------*/
+ 502          void login()
+ 503          {
+ 504   1              option = 0x00;
+ 505   1              back = 0;
+ 506   1              while (1)
+ 507   1              {
+ 508   2                      sbtLedSel = 0;
+ 509   2                      print_login();
+ 510   2                      print();
+ 511   2                      if (sbtKey1 == 0)
+ 512   2                      {
+ 513   3                              delay_ms(5); //延时消抖
+ 514   3                              if (sbtKey1 == 0)
+ 515   3                              {
+ 516   4                                      while (!sbtKey1)
+ 517   4                                              ;
+ 518   4                                      {
+ 519   5                                              game();
+ 520   5                                              return;
+ 521   5                                      }
+ 522   4                              }
+ 523   3                      }
+ 524   2                      if (sbtKey2 == 0)
+ 525   2                      {
+ 526   3                              delay_ms(5); //延时消抖
+ 527   3                              if (sbtKey2 == 0)
+ 528   3                              {
+ 529   4                                      while (!sbtKey2)
+ 530   4                                              ;
+ 531   4                                      if (player == 15)
+ 532   4                                              player = 0;
+ 533   4                                      else
+ 534   4                                              player++;
+ 535   4                                      //next
+ 536   4                              }
+ 537   3                      }
+ 538   2              }
+ 539   1      }
+ 540          
+ 541          /*---------排行--------*/
+ 542          void list()
+ 543          {
+ 544   1              option = 0x00;
+ 545   1              while (1)
+ 546   1              {
+ 547   2                      sbtLedSel = 0;
+ 548   2                      print_list();
+ 549   2                      print();
+C51 COMPILER V9.51   TEST                                                                  09/11/2020 21:18:19 PAGE 10  
 
- 550   3                              {
- 551   4                                      while (!sbtKey1)
- 552   4                                              ;
- 553   4      
- 554   4                                      for (i = 0; i < 21; i++)
- 555   4                                      {
- 556   5                                              write_add(i, 0);
- 557   5                                              delay_ms(10);
- 558   5                                      }
- 559   4                                      return;
- 560   4                              }
- 561   3                      }
- 562   2                      if (sbtKey2 == 0)
- 563   2                      {
- 564   3                              delay_ms(5); //延时消抖
- 565   3                              if (sbtKey2 == 0)
- 566   3                              {
- 567   4                                      while (!sbtKey2)
- 568   4                                              ;
- 569   4                                      return;
- 570   4                              }
- 571   3                      }
- 572   2              }
- 573   1      }
- 574          
- 575          /*---------初始化函数--------*/
- 576          void Init()
- 577          {
- 578   1              P0M1 = 0x00;
- 579   1              P0M0 = 0xff;
- 580   1              P2M1 = 0x00;
- 581   1              P2M0 = 0x08;
- 582   1              P3M1 = 0x00;
- 583   1              P3M0 = 0x10;      //设置P3^4为推挽模式
- 584   1              sbtBeep = 0;      //蜂鸣器引脚置0，以保护蜂鸣器
- 585   1              sbtLedSel = 0;    //选择数码管作为输出
- 586   1              P1ASF = 0x80;     //P1.7作为模拟功能A/D使用
- 587   1              ADC_RES = 0;      //转换结果清零
- 588   1              ADC_CONTR = 0x8F; //cstAdcPower = 1
- 589   1              CLK_DIV = 0X00;   //ADRJ = 0    ADC_RES存放高八位结果
- 590   1              IT0 = 0;                  //设置IT0上升沿触发
- 591   1              IT1 = 0;
- 592   1              EA = 1;          //CPU开放中断
- 593   1              TMOD = 0x00; //设置定时器0，工作方式0，16位自动重装定时器
- 594   1              TH0 = 0xff;      //设定定时器0的初值
- 595   1              TL0 = 0x03;
- 596   1              ET0 = 1; //打开定时器0中断允许位
- 597   1              TR0 = 1;
- 598   1              P0 = 0x00; //关闭P0端口
- 599   1              ques_flag = 0;
- 600   1              sbtLedSel = 0; //先选择数码管亮
- 601   1              uiLed = 0x00;
- 602   1              highest_sc = read_add(0); //读取最高分
- 603   1              highest_er = read_add(1); //读取最高玩家
- 604   1      }
- 605          
- 606          /*---------主函数--------*/
- 607          void main()
- 608          {
- 609   1              Init();
- 610   1              IIC_init(); //IIC总线初始化
- 611   1              while (1)
-C51 COMPILER V9.51   TEST                                                                  09/11/2020 20:51:47 PAGE 11  
+ 550   2                      if (sbtKey1 == 0)
+ 551   2                      {
+ 552   3                              delay_ms(5); //延时消抖
+ 553   3                              if (sbtKey1 == 0)
+ 554   3                              {
+ 555   4                                      while (!sbtKey1)
+ 556   4                                              ;
+ 557   4                                      {
+ 558   5                                              option = 0x00;
+ 559   5                                              break;
+ 560   5                                      }
+ 561   4                              }
+ 562   3                      }
+ 563   2                      if (sbtKey2 == 0)
+ 564   2                      {
+ 565   3                              delay_ms(5); //延时消抖
+ 566   3                              if (sbtKey2 == 0)
+ 567   3                              {
+ 568   4                                      while (!sbtKey2)
+ 569   4                                              ;
+ 570   4                                      if (option == 0x10)
+ 571   4                                              option = 0x00;
+ 572   4                                      else
+ 573   4                                              option++;
+ 574   4                                      //next
+ 575   4                              }
+ 576   3                      }
+ 577   2              }
+ 578   1      }
+ 579          
+ 580          /*---------重置存储器--------*/
+ 581          void restart()
+ 582          {
+ 583   1              option = 0x00;
+ 584   1              clear();
+ 585   1              while (1)
+ 586   1              {
+ 587   2                      sbtLedSel = 0;
+ 588   2                      print_back();
+ 589   2                      print();
+ 590   2                      if (sbtKey1 == 0)
+ 591   2                      {
+ 592   3                              delay_ms(5); //延时消抖
+ 593   3                              if (sbtKey1 == 0)
+ 594   3                              {
+ 595   4                                      while (!sbtKey1)
+ 596   4                                              ;
+ 597   4      
+ 598   4                                      for (i = 0; i < 21; i++)
+ 599   4                                      {
+ 600   5                                              write_add(i, 0);
+ 601   5                                              delay_ms(10);
+ 602   5                                      }
+ 603   4                                      return;
+ 604   4                              }
+ 605   3                      }
+ 606   2                      if (sbtKey2 == 0)
+ 607   2                      {
+ 608   3                              delay_ms(5); //延时消抖
+ 609   3                              if (sbtKey2 == 0)
+ 610   3                              {
+ 611   4                                      while (!sbtKey2)
+C51 COMPILER V9.51   TEST                                                                  09/11/2020 21:18:19 PAGE 11  
 
- 612   1              {
- 613   2                      sbtLedSel = 0;
- 614   2                      print_manu();
- 615   2                      print();
- 616   2                      if (sbtKey1 == 0)
- 617   2                      {
- 618   3                              delay_ms(5); //延时消抖
- 619   3                              if (sbtKey1 == 0)
- 620   3                              {
- 621   4                                      while (!sbtKey1)
- 622   4                                              ;
- 623   4                                      if (option == 0x00)
- 624   4                                              login(); //注册并开始游戏
- 625   4                                      else if (option == 0x01)
- 626   4                                              list(); //查看排行
- 627   4                                      else
- 628   4                                              restart(); //重置
- 629   4                              }
- 630   3                      }
- 631   2                      if (sbtKey2 == 0)
- 632   2                      {
- 633   3                              delay_ms(5); //延时消抖
- 634   3                              if (sbtKey2 == 0)
- 635   3                              {
- 636   4                                      while (!sbtKey2)
- 637   4                                              ;
- 638   4                                      if (option == 0x2)
- 639   4                                              option = 0;
- 640   4                                      else
- 641   4                                              option++;
- 642   4                              }
- 643   3                      }
- 644   2              }
- 645   1      }
+ 612   4                                              ;
+ 613   4                                      return;
+ 614   4                              }
+ 615   3                      }
+ 616   2              }
+ 617   1      }
+ 618          
+ 619          /*---------初始化函数--------*/
+ 620          void Init()
+ 621          {
+ 622   1              P0M1 = 0x00;
+ 623   1              P0M0 = 0xff;
+ 624   1              P2M1 = 0x00;
+ 625   1              P2M0 = 0x08;
+ 626   1              P3M1 = 0x00;
+ 627   1              P3M0 = 0x10;      //设置P3^4为推挽模式
+ 628   1              sbtBeep = 0;      //蜂鸣器引脚置0，以保护蜂鸣器
+ 629   1              sbtLedSel = 0;    //选择数码管作为输出
+ 630   1              P1ASF = 0x80;     //P1.7作为模拟功能A/D使用
+ 631   1              ADC_RES = 0;      //转换结果清零
+ 632   1              ADC_CONTR = 0x8F; //cstAdcPower = 1
+ 633   1              CLK_DIV = 0X00;   //ADRJ = 0    ADC_RES存放高八位结果
+ 634   1              IT0 = 0;                  //设置IT0上升沿触发
+ 635   1              IT1 = 0;
+ 636   1              EA = 1;          //CPU开放中断
+ 637   1              TMOD = 0x00; //设置定时器0，工作方式0，16位自动重装定时器
+ 638   1              TH0 = 0xff;      //设定定时器0的初值
+ 639   1              TL0 = 0x03;
+ 640   1              ET0 = 1; //打开定时器0中断允许位
+ 641   1              TR0 = 1;
+ 642   1              P0 = 0x00; //关闭P0端口
+ 643   1              ques_flag = 0;
+ 644   1              sbtLedSel = 0; //先选择数码管亮
+ 645   1              uiLed = 0x00;
+ 646   1              highest_sc = read_add(0); //读取最高分
+ 647   1              highest_er = read_add(1); //读取最高玩家
+ 648   1      }
+ 649          
+ 650          /*---------主函数--------*/
+ 651          void main()
+ 652          {
+ 653   1              Init();
+ 654   1              IIC_init(); //IIC总线初始化
+ 655   1              while (1)
+ 656   1              {
+ 657   2                      sbtLedSel = 0;
+ 658   2                      print_manu();
+ 659   2                      print();
+ 660   2                      if (sbtKey1 == 0)
+ 661   2                      {
+ 662   3                              delay_ms(5); //延时消抖
+ 663   3                              if (sbtKey1 == 0)
+ 664   3                              {
+ 665   4                                      while (!sbtKey1)
+ 666   4                                              ;
+ 667   4                                      if (option == 0x00)
+ 668   4                                              login(); //注册并开始游戏
+ 669   4                                      else if (option == 0x01)
+ 670   4                                              list(); //查看排行
+ 671   4                                      else
+ 672   4                                              restart(); //重置
+ 673   4                              }
+C51 COMPILER V9.51   TEST                                                                  09/11/2020 21:18:19 PAGE 12  
+
+ 674   3                      }
+ 675   2                      if (sbtKey2 == 0)
+ 676   2                      {
+ 677   3                              delay_ms(5); //延时消抖
+ 678   3                              if (sbtKey2 == 0)
+ 679   3                              {
+ 680   4                                      while (!sbtKey2)
+ 681   4                                              ;
+ 682   4                                      if (option == 0x2)
+ 683   4                                              option = 0;
+ 684   4                                      else
+ 685   4                                              option++;
+ 686   4                              }
+ 687   3                      }
+ 688   2              }
+ 689   1      }
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =   1354    ----
+   CODE SIZE        =   1361    ----
    CONSTANT SIZE    =   ----    ----
    XDATA SIZE       =   ----    ----
    PDATA SIZE       =   ----    ----
-   DATA SIZE        =     73       2
+   DATA SIZE        =     72       2
    IDATA SIZE       =   ----    ----
    BIT SIZE         =   ----    ----
 END OF MODULE INFORMATION.

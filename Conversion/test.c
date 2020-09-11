@@ -1,24 +1,34 @@
 #include <STC15F2K60S2.H>
 #include <intrins.h>
 #include <stdlib.h>
-#define uint unsigned int
-#define uchar unsigned char
 
 /*---------宏定义---------*/
+#define uint unsigned int
+#define uchar unsigned char
 #define cstAdcPower 0X80   /*ADC电源开关*/
 #define cstAdcFlag 0X10	   /*当A/D转换完成后，cstAdcFlag要软件清零*/
 #define cstAdcStart 0X08   /*当A/D转换完成后，cstAdcStart会自动清零，所以要开始下一次转换，则需要置位*/
 #define cstAdcSpeed90 0X60 /*ADC转换速度 90个时钟周期转换一次*/
 #define cstAdcChs17 0X07   /*选择P1.7作为A/D输入*/
 
-uchar arrSegSelect[] = {0x3f, 0x06, 0x5b, 0x4f, 0x66, 0x6d, 0x7d, 0x07, 0x7f, 0x6f, 0x77, 0x7c, 0x39, 0x5e, 0x79, 0x71, 0x00, 0x38, 0x74, 0x67, 0xa7, 0x77, 0x79};
+/*---------统一使用的表单---------*/
+//数码管段选信号
+//0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
+//0 1 2 3 4 5 6 7 8 9 A  B  C  D  E  F  空 L  h	 q  ?   
+uchar arrSegSelect[] = {0x3f, 0x06, 0x5b, 0x4f, 0x66, 0x6d, 0x7d, 0x07, 0x7f, 0x6f, 0x77, 0x7c, 0x39, 0x5e, 0x79, 0x71, 0x00, 0x38, 0x74, 0x67, 0xa7};
+//数码管位选信号
 uchar arrDigitSelect[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07}; //数码管0-7
+//数码管显示表单
 uint arrPrintSelect[] = {16, 16, 16, 16, 16, 16, 16, 16};
+
 /*---------引脚别名定义---------*/
-sbit sbtLedSel = P2 ^ 3; //数码管与LED灯切换引脚
-sbit SDA = P4 ^ 0;		 //I2C总线的数据线
-sbit SCL = P5 ^ 5;		 //I2C总线的时钟线
-sbit sbtBeep = P3 ^ 4;	 //蜂鸣器引脚
+sbit sbtLedSel = P2 ^ 3; 	//数码管与LED灯切换引脚
+sbit SDA = P4 ^ 0;		 	//I2C总线的数据线
+sbit SCL = P5 ^ 5;		 	//I2C总线的时钟线
+sbit sbtBeep = P3 ^ 4;	 	//蜂鸣器引脚
+sbit sbtKey1 = P3 ^ 2; 		//按键1引脚
+sbit sbtKey2 = P3 ^ 3; 		//按键2引脚
+sbit sbtKey3 = P1 ^ 7; 		//按键3引脚
 
 /*---------变量定义---------*/
 uchar uiLed = 0x00;		  //LED灯值寄存
@@ -34,19 +44,15 @@ uint ques0, ques1, ques2; //问题
 uint ques_flag = 0;		  //问题标志
 uchar option = 0x00;	  //选项
 uint back = 0;			  //回退标志
-
-/*---------引脚别名定义---------*/
-sbit sbtKey1 = P3 ^ 2; //按键1引脚
-sbit sbtKey2 = P3 ^ 3;
-sbit sbtKey3 = P1 ^ 7;
+uchar addr = 0x00;		  //地址
 
 /*---------延时子函数--------*/
-void delay(uint n)
+void delay(uint n)		//通用延时
 {
 	while (n--)
 		;
 }
-void delay_ms(uint n)
+void delay_ms(uint n)	//延时n毫秒
 {
 	while (n)
 	{
@@ -61,19 +67,23 @@ void delay_ms(uint n)
 		n--;
 	}
 }
-void delay4() //延时4us
+void delay4() 			//延时4us
 {
 	;
 	;
 }
-void IIC_init() //I2C总线初始化
+
+//I2C总线初始化
+void IIC_init() 
 {
 	SCL = 1;
 	delay4();
 	SDA = 1;
 	delay4();
 }
-void start() //主机启动信号
+
+//主机启动信号
+void start() 
 {
 	SDA = 1;
 	delay4();
@@ -82,7 +92,9 @@ void start() //主机启动信号
 	SDA = 0;
 	delay4();
 }
-void stop() //停止信号
+
+//停止信号
+void stop() 
 {
 	SDA = 0;
 	delay4();
@@ -91,7 +103,9 @@ void stop() //停止信号
 	SDA = 1;
 	delay4();
 }
-void respons() //从机应答信号
+
+//从机应答信号
+void respons() 
 {
 	uchar i = 0;
 	SCL = 1;
@@ -101,7 +115,9 @@ void respons() //从机应答信号
 	SCL = 0;
 	delay4();
 }
-void writebyte(uchar date) //对24C02写一个字节数据
+
+//对24C02写一个字节数据
+void writebyte(uchar date) 
 {
 	uchar i, temp;
 	temp = date;
@@ -120,7 +136,9 @@ void writebyte(uchar date) //对24C02写一个字节数据
 	SDA = 1;
 	delay4();
 }
-uchar readbyte() //从24C02读一个字节数据
+
+//从24C02读一个字节数据
+uchar readbyte() 
 {
 	uchar i, k;
 	SCL = 0;
@@ -139,7 +157,9 @@ uchar readbyte() //从24C02读一个字节数据
 	delay4();
 	return k;
 }
-void write_add(uchar addr, uchar date) //对24C02的地址addr，写入一个数据date
+
+//对24C02的地址addr，写入一个数据date
+void write_add(uchar addr, uchar date) 
 {
 	start();
 	writebyte(0xa0);
@@ -150,7 +170,9 @@ void write_add(uchar addr, uchar date) //对24C02的地址addr，写入一个数据date
 	respons();
 	stop();
 }
-uchar read_add(uchar addr) //从24C02的addr地址，读一个字节数据
+
+//从24C02的addr地址，读一个字节数据
+uchar read_add(uchar addr) 
 {
 	uchar date;
 	start();
@@ -165,39 +187,48 @@ uchar read_add(uchar addr) //从24C02的addr地址，读一个字节数据
 	stop();
 	return date;
 }
+
 int game_back();
+
+//上传函数 游戏中确定后对答案进行上传和比对，结果存入存储器
 void upload()
 {
 	uiLed = 0x00;
 	tmpLed = 0x01;
 	ques_flag = 0;
 	answer = P0;
-	if (answer == ques)
+	addr=player+2;
+	if (answer == ques)		//答案正确
 	{
 		score++;
 		if (score == 15)
 		{
 			highest_sc = score;
 			highest_er = player;
-			write_add(player + 2, score);
 			write_add(0, score);
+			delay_ms(5);
 			write_add(1, player);
+			delay_ms(5);
+			write_add(player + 2, score);
+			delay_ms(5);
 			score = 0;
 		}
+		
 	}
-	else
+	else					//错误
 	{
 		if (score > highest_sc)
 		{
 			highest_sc = score;
 			highest_er = player;
 			write_add(0, score);
+			delay_ms(5);
 			write_add(1, player);
+			delay_ms(5);
 		}
-		/*btBeepFlag = ~btBeepFlag;
-		delay(600);
-		btBeepFlag = ~btBeepFlag;*/
-		write_add(player + 2, score);
+		
+		write_add(addr, score);
+		delay_ms(5);
 		score = 0;
 	}
 }
@@ -279,6 +310,7 @@ void NavKey_Process()
 	delay(1000);
 }
 
+/*---------问题--------*/
 void question()
 {
 	ques = rand() % 256;
@@ -287,12 +319,14 @@ void question()
 	ques2 = ques / 100 % 10;
 }
 
+/*---------清屏--------*/
 void clear()
 {
 	for (i = 0; i < 8; i++)
 		arrPrintSelect[i] = 16;
 }
 
+/*---------通用输出--------*/
 void print()
 {
 	for (i = 0; i < 8; i++)
@@ -304,6 +338,7 @@ void print()
 	}
 }
 
+/*---------游戏输出--------*/
 void print_game()
 {
 	clear();
@@ -314,6 +349,7 @@ void print_game()
 	arrPrintSelect[7] = ques0;
 }
 
+/*---------菜单输出--------*/
 void print_manu()
 {
 	clear();
@@ -334,11 +370,12 @@ void print_manu()
 	else
 	{
 		arrPrintSelect[0] = 2;
-		arrPrintSelect[6] = 21;
-		arrPrintSelect[7] = 22;
+		arrPrintSelect[6] = 10;
+		arrPrintSelect[7] = 14;
 	}
 }
 
+/*---------排行榜输出--------*/
 void print_list()
 {
 	clear();
@@ -359,9 +396,11 @@ void print_list()
 		arrPrintSelect[3] = 7;
 		arrPrintSelect[5] = option - 1;
 		arrPrintSelect[7] = read_add(option + 1);
+		delay_ms(5);
 	}
 }
 
+/*---------登录界面输出--------*/
 void print_login()
 {
 	clear();
@@ -370,6 +409,7 @@ void print_login()
 	arrPrintSelect[7] = player;
 }
 
+/*---------问号输出--------*/
 void print_back()
 {
 	clear();
@@ -377,6 +417,7 @@ void print_back()
 	arrPrintSelect[7] = 20;
 }
 
+/*---------返回--------*/
 int game_back()
 {
 	while (1)
@@ -411,6 +452,7 @@ int game_back()
 	}
 }
 
+/*---------游戏主函数--------*/
 void game()
 {
 	clear();
@@ -535,8 +577,10 @@ void list()
 	}
 }
 
+/*---------重置存储器--------*/
 void restart()
 {
+	option = 0x00;
 	clear();
 	while (1)
 	{
