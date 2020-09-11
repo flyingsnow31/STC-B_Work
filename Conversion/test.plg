@@ -1,0 +1,365 @@
+<html>
+<body>
+<pre>
+<h1>µVision Build Log</h1>
+<h2>Project:</h2>
+E:\STC-BÑ§Ï°°å\¹¤³Ì\test\test.uvproj
+Project File Date:  09/11/2020
+
+<h2>Output:</h2>
+Rebuild target 'Target 1'
+assembling STARTUP.A51...
+compiling test.c...
+linking...
+Program Size: data=110.1 xdata=0 code=1503
+creating hex file from "test"...
+"test" - 0 Error(s), 0 Warning(s).
+Build target 'Target 1'
+compiling test.c...
+test.c(113): error C100: unprintable character 0xA3 skipped
+test.c(113): error C100: unprintable character 0xBB skipped
+test.c(114): error C141: syntax error near '}'
+Target not created
+Rebuild target 'Target 1'
+assembling STARTUP.A51...
+compiling test.c...
+test.c(113): error C100: unprintable character 0xA3 skipped
+test.c(113): error C100: unprintable character 0xBB skipped
+test.c(114): error C141: syntax error near '}'
+Target not created
+Rebuild target 'Target 1'
+assembling STARTUP.A51...
+compiling test.c...
+linking...
+Program Size: data=110.1 xdata=0 code=1479
+creating hex file from "test"...
+"test" - 0 Error(s), 0 Warning(s).
+Rebuild target 'Target 1'
+assembling STARTUP.A51...
+compiling test.c...
+linking...
+Program Size: data=110.1 xdata=0 code=1479
+creating hex file from "test"...
+"test" - 0 Error(s), 0 Warning(s).
+Rebuild target 'Target 1'
+assembling STARTUP.A51...
+compiling test.c...
+linking...
+Program Size: data=110.1 xdata=0 code=1486
+creating hex file from "test"...
+"test" - 0 Error(s), 0 Warning(s).
+Rebuild target 'Target 1'
+assembling STARTUP.A51...
+compiling test.c...
+linking...
+Program Size: data=110.1 xdata=0 code=1493
+creating hex file from "test"...
+"test" - 0 Error(s), 0 Warning(s).
+Rebuild target 'Target 1'
+assembling STARTUP.A51...
+compiling test.c...
+test.c(87): warning C206: 'read_add': missing function-prototype
+test.c(87): error C267: 'read_add': requires ANSI-style prototype
+test.c(91): error C141: syntax error near 'void'
+Target not created
+Rebuild target 'Target 1'
+assembling STARTUP.A51...
+compiling test.c...
+test.c(79): error C236: '_delay': different length of parameter lists
+test.c(81): error C237: '_delay': function already has a body
+Target not created
+Rebuild target 'Target 1'
+assembling STARTUP.A51...
+compiling test.c...
+test.c(194): error C202: 'G_count': undefined identifier
+test.c(195): error C202: 'G_count': undefined identifier
+test.c(198): error C202: 'G_count': undefined identifier
+Target not created
+Rebuild target 'Target 1'
+assembling STARTUP.A51...
+compiling test.c...
+test.c(201): warning C206: 'SMG1': missing function-prototype
+test.c(201): error C267: 'SMG1': requires ANSI-style prototype
+Target not created
+Rebuild target 'Target 1'
+assembling STARTUP.A51...
+compiling test.c...
+test.c(583): warning C206: 'Timer0_Init': missing function-prototype
+linking...
+*** ERROR L107: ADDRESS SPACE OVERFLOW
+    SPACE:   DATA    
+    SEGMENT: ?DT?TEST
+    LENGTH:  0063H
+*** WARNING L1: UNRESOLVED EXTERNAL SYMBOL
+    SYMBOL:  TIMER0_INIT
+    MODULE:  test.obj (TEST)
+*** ERROR L105: PUBLIC REFERS TO IGNORED SEGMENT
+    SYMBOL:  UILED
+    SEGMENT: ?DT?TEST
+*** ERROR L105: PUBLIC REFERS TO IGNORED SEGMENT
+    SYMBOL:  QUES2
+    SEGMENT: ?DT?TEST
+*** ERROR L105: PUBLIC REFERS TO IGNORED SEGMENT
+    SYMBOL:  QUES1
+    SEGMENT: ?DT?TEST
+*** ERROR L105: PUBLIC REFERS TO IGNORED SEGMENT
+    SYMBOL:  QUES0
+    SEGMENT: ?DT?TEST
+*** ERROR L105: PUBLIC REFERS TO IGNORED SEGMENT
+    SYMBOL:  TMPLED
+    SEGMENT: ?DT?TEST
+*** ERROR L105: PUBLIC REFERS TO IGNORED SEGMENT
+    SYMBOL:  I
+    SEGMENT: ?DT?TEST
+*** ERROR L105: PUBLIC REFERS TO IGNORED SEGMENT
+    SYMBOL:  G_COUNT
+    SEGMENT: ?DT?TEST
+*** ERROR L105: PUBLIC REFERS TO IGNORED SEGMENT
+    SYMBOL:  ARRSEGSELECT
+    SEGMENT: ?DT?TEST
+*** ERROR L105: PUBLIC REFERS TO IGNORED SEGMENT
+    SYMBOL:  ARRLISTSELECT
+    SEGMENT: ?DT?TEST
+*** ERROR L105: PUBLIC REFERS TO IGNORED SEGMENT
+    SYMBOL:  QUES
+    SEGMENT: ?DT?TEST
+*** ERROR L105: PUBLIC REFERS TO IGNORED SEGMENT
+    SYMBOL:  QUES_FLAG
+    SEGMENT: ?DT?TEST
+*** ERROR L105: PUBLIC REFERS TO IGNORED SEGMENT
+    SYMBOL:  ARRPRINTSELECT
+    SEGMENT: ?DT?TEST
+*** ERROR L105: PUBLIC REFERS TO IGNORED SEGMENT
+    SYMBOL:  WRITE_DATE
+    SEGMENT: ?DT?TEST
+*** ERROR L105: PUBLIC REFERS TO IGNORED SEGMENT
+    SYMBOL:  WRITE_ADDR
+    SEGMENT: ?DT?TEST
+*** ERROR L105: PUBLIC REFERS TO IGNORED SEGMENT
+    SYMBOL:  HIGHEST_ER
+    SEGMENT: ?DT?TEST
+*** ERROR L105: PUBLIC REFERS TO IGNORED SEGMENT
+    SYMBOL:  HIGHEST_SC
+    SEGMENT: ?DT?TEST
+*** ERROR L105: PUBLIC REFERS TO IGNORED SEGMENT
+    SYMBOL:  ARRLEDSELECT
+    SEGMENT: ?DT?TEST
+*** ERROR L105: PUBLIC REFERS TO IGNORED SEGMENT
+    SYMBOL:  ARRDIGITSELECT
+    SEGMENT: ?DT?TEST
+*** ERROR L105: PUBLIC REFERS TO IGNORED SEGMENT
+    SYMBOL:  SCORE
+    SEGMENT: ?DT?TEST
+*** ERROR L105: PUBLIC REFERS TO IGNORED SEGMENT
+    SYMBOL:  READ_DATE
+    SEGMENT: ?DT?TEST
+*** ERROR L105: PUBLIC REFERS TO IGNORED SEGMENT
+    SYMBOL:  OPTION
+    SEGMENT: ?DT?TEST
+*** ERROR L105: PUBLIC REFERS TO IGNORED SEGMENT
+    SYMBOL:  ANSWER
+    SEGMENT: ?DT?TEST
+*** ERROR L105: PUBLIC REFERS TO IGNORED SEGMENT
+    SYMBOL:  BACK
+    SEGMENT: ?DT?TEST
+*** ERROR L105: PUBLIC REFERS TO IGNORED SEGMENT
+    SYMBOL:  PLAYER
+    SEGMENT: ?DT?TEST
+*** WARNING L2: REFERENCE MADE TO UNRESOLVED EXTERNAL
+    SYMBOL:  TIMER0_INIT
+    MODULE:  test.obj (TEST)
+    ADDRESS: 0C67H
+Program Size: data=114.2 xdata=0 code=1758
+Target not created
+Rebuild target 'Target 1'
+assembling STARTUP.A51...
+compiling test.c...
+linking...
+*** ERROR L107: ADDRESS SPACE OVERFLOW
+    SPACE:   DATA    
+    SEGMENT: ?DT?TEST
+    LENGTH:  0063H
+*** ERROR L105: PUBLIC REFERS TO IGNORED SEGMENT
+    SYMBOL:  UILED
+    SEGMENT: ?DT?TEST
+*** ERROR L105: PUBLIC REFERS TO IGNORED SEGMENT
+    SYMBOL:  QUES2
+    SEGMENT: ?DT?TEST
+*** ERROR L105: PUBLIC REFERS TO IGNORED SEGMENT
+    SYMBOL:  QUES1
+    SEGMENT: ?DT?TEST
+*** ERROR L105: PUBLIC REFERS TO IGNORED SEGMENT
+    SYMBOL:  QUES0
+    SEGMENT: ?DT?TEST
+*** ERROR L105: PUBLIC REFERS TO IGNORED SEGMENT
+    SYMBOL:  TMPLED
+    SEGMENT: ?DT?TEST
+*** ERROR L105: PUBLIC REFERS TO IGNORED SEGMENT
+    SYMBOL:  I
+    SEGMENT: ?DT?TEST
+*** ERROR L105: PUBLIC REFERS TO IGNORED SEGMENT
+    SYMBOL:  G_COUNT
+    SEGMENT: ?DT?TEST
+*** ERROR L105: PUBLIC REFERS TO IGNORED SEGMENT
+    SYMBOL:  ARRSEGSELECT
+    SEGMENT: ?DT?TEST
+*** ERROR L105: PUBLIC REFERS TO IGNORED SEGMENT
+    SYMBOL:  ARRLISTSELECT
+    SEGMENT: ?DT?TEST
+*** ERROR L105: PUBLIC REFERS TO IGNORED SEGMENT
+    SYMBOL:  QUES
+    SEGMENT: ?DT?TEST
+*** ERROR L105: PUBLIC REFERS TO IGNORED SEGMENT
+    SYMBOL:  QUES_FLAG
+    SEGMENT: ?DT?TEST
+*** ERROR L105: PUBLIC REFERS TO IGNORED SEGMENT
+    SYMBOL:  ARRPRINTSELECT
+    SEGMENT: ?DT?TEST
+*** ERROR L105: PUBLIC REFERS TO IGNORED SEGMENT
+    SYMBOL:  WRITE_DATE
+    SEGMENT: ?DT?TEST
+*** ERROR L105: PUBLIC REFERS TO IGNORED SEGMENT
+    SYMBOL:  WRITE_ADDR
+    SEGMENT: ?DT?TEST
+*** ERROR L105: PUBLIC REFERS TO IGNORED SEGMENT
+    SYMBOL:  HIGHEST_ER
+    SEGMENT: ?DT?TEST
+*** ERROR L105: PUBLIC REFERS TO IGNORED SEGMENT
+    SYMBOL:  HIGHEST_SC
+    SEGMENT: ?DT?TEST
+*** ERROR L105: PUBLIC REFERS TO IGNORED SEGMENT
+    SYMBOL:  ARRLEDSELECT
+    SEGMENT: ?DT?TEST
+*** ERROR L105: PUBLIC REFERS TO IGNORED SEGMENT
+    SYMBOL:  ARRDIGITSELECT
+    SEGMENT: ?DT?TEST
+*** ERROR L105: PUBLIC REFERS TO IGNORED SEGMENT
+    SYMBOL:  SCORE
+    SEGMENT: ?DT?TEST
+*** ERROR L105: PUBLIC REFERS TO IGNORED SEGMENT
+    SYMBOL:  READ_DATE
+    SEGMENT: ?DT?TEST
+*** ERROR L105: PUBLIC REFERS TO IGNORED SEGMENT
+    SYMBOL:  OPTION
+    SEGMENT: ?DT?TEST
+*** ERROR L105: PUBLIC REFERS TO IGNORED SEGMENT
+    SYMBOL:  ANSWER
+    SEGMENT: ?DT?TEST
+*** ERROR L105: PUBLIC REFERS TO IGNORED SEGMENT
+    SYMBOL:  BACK
+    SEGMENT: ?DT?TEST
+*** ERROR L105: PUBLIC REFERS TO IGNORED SEGMENT
+    SYMBOL:  PLAYER
+    SEGMENT: ?DT?TEST
+Program Size: data=114.2 xdata=0 code=1801
+Target not created
+Rebuild target 'Target 1'
+assembling STARTUP.A51...
+compiling test.c...
+test.c(547): error C202: 'btBeepFlag': undefined identifier
+test.c(549): error C202: 'sbtBeep': undefined identifier
+test.c(553): error C202: 'write_addr': undefined identifier
+test.c(554): error C202: 'write_date': undefined identifier
+Target not created
+Rebuild target 'Target 1'
+assembling STARTUP.A51...
+compiling test.c...
+test.c(559): warning C206: 'Timer0_Init': missing function-prototype
+linking...
+*** WARNING L1: UNRESOLVED EXTERNAL SYMBOL
+    SYMBOL:  TIMER0_INIT
+    MODULE:  test.obj (TEST)
+*** WARNING L2: REFERENCE MADE TO UNRESOLVED EXTERNAL
+    SYMBOL:  TIMER0_INIT
+    MODULE:  test.obj (TEST)
+    ADDRESS: 0C33H
+Program Size: data=86.0 xdata=0 code=1706
+creating hex file from "test"...
+"test" - 0 Error(s), 3 Warning(s).
+Rebuild target 'Target 1'
+assembling STARTUP.A51...
+compiling test.c...
+linking...
+Program Size: data=86.0 xdata=0 code=1703
+creating hex file from "test"...
+"test" - 0 Error(s), 0 Warning(s).
+Rebuild target 'Target 1'
+assembling STARTUP.A51...
+compiling test.c...
+linking...
+Program Size: data=86.0 xdata=0 code=1705
+creating hex file from "test"...
+"test" - 0 Error(s), 0 Warning(s).
+Rebuild target 'Target 1'
+assembling STARTUP.A51...
+compiling test.c...
+test.c(603): warning C276: constant in condition expression
+linking...
+*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
+    SEGMENT: ?PR?RESTART?TEST
+Program Size: data=86.0 xdata=0 code=1770
+creating hex file from "test"...
+"test" - 0 Error(s), 2 Warning(s).
+Rebuild target 'Target 1'
+assembling STARTUP.A51...
+compiling test.c...
+linking...
+Program Size: data=86.0 xdata=0 code=1777
+creating hex file from "test"...
+"test" - 0 Error(s), 0 Warning(s).
+Rebuild target 'Target 1'
+assembling STARTUP.A51...
+compiling test.c...
+linking...
+Program Size: data=86.0 xdata=0 code=1777
+creating hex file from "test"...
+"test" - 0 Error(s), 0 Warning(s).
+Rebuild target 'Target 1'
+assembling STARTUP.A51...
+compiling test.c...
+linking...
+Program Size: data=88.0 xdata=0 code=1797
+creating hex file from "test"...
+"test" - 0 Error(s), 0 Warning(s).
+Rebuild target 'Target 1'
+assembling STARTUP.A51...
+compiling test.c...
+linking...
+Program Size: data=88.0 xdata=0 code=1804
+creating hex file from "test"...
+"test" - 0 Error(s), 0 Warning(s).
+Rebuild target 'Target 1'
+assembling STARTUP.A51...
+compiling test.c...
+linking...
+Program Size: data=88.0 xdata=0 code=1823
+creating hex file from "test"...
+"test" - 0 Error(s), 0 Warning(s).
+Rebuild target 'Target 1'
+assembling STARTUP.A51...
+compiling test.c...
+linking...
+Program Size: data=88.0 xdata=0 code=1823
+creating hex file from "test"...
+"test" - 0 Error(s), 0 Warning(s).
+Rebuild target 'Target 1'
+assembling STARTUP.A51...
+compiling test.c...
+linking...
+Program Size: data=88.0 xdata=0 code=1830
+creating hex file from "test"...
+"test" - 0 Error(s), 0 Warning(s).
+Rebuild target 'Target 1'
+assembling STARTUP.A51...
+compiling test.c...
+linking...
+Program Size: data=88.0 xdata=0 code=1830
+creating hex file from "test"...
+"test" - 0 Error(s), 0 Warning(s).
+Rebuild target 'Target 1'
+assembling STARTUP.A51...
+compiling test.c...
+linking...
+Program Size: data=88.0 xdata=0 code=1811
+creating hex file from "test"...
+"test" - 0 Error(s), 0 Warning(s).
