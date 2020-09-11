@@ -1,0 +1,285 @@
+C51 COMPILER V9.51   TEST                                                                  09/09/2020 22:22:16 PAGE 1   
+
+
+C51 COMPILER V9.51, COMPILATION OF MODULE TEST
+OBJECT MODULE PLACED IN test.OBJ
+COMPILER INVOKED BY: G:\Keil\C51\BIN\C51.EXE test.c BROWSE DEBUG OBJECTEXTEND TABS(2)
+
+line level    source
+
+   1          #include <STC15F2K60S2.H>
+   2          #include <intrins.h>
+   3          #include <stdlib.h>
+   4          #define uint  unsigned int
+   5          #define uchar unsigned char
+   6          
+   7          /*---------宏定义---------*/
+   8          #define cstAdcPower 0X80     /*ADC电源开关*/
+   9          #define cstAdcFlag 0X10      /*当A/D转换完成后，cstAdcFlag要软件清零*/
+  10          #define cstAdcStart 0X08     /*当A/D转换完成后，cstAdcStart会自动清零，所以要开始下一次转换，则需要置位*/
+  11          #define cstAdcSpeed90 0X60   /*ADC转换速度 90个时钟周期转换一次*/
+  12          #define cstAdcChs17 0X07     /*选择P1.7作为A/D输入*/
+  13          
+  14          uchar arrSegSelect[] = {0x3f, 0x06, 0x5b, 0x4f, 0x66, 0x6d, 0x7d, 0x07, 0x7f, 0x6f, 0x77, 0x7c, 0x39, 0x5e
+             -, 0x79, 0x71, 0x00};
+  15          uchar arrDigitSelect[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};   //数码管0-7
+  16          uchar arrLEDselect[] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80}; //LED灯
+  17          
+  18          /*---------引脚别名定义---------*/
+  19          sbit sbtLedSel = P2 ^ 3;  //数码管与LED灯切换引脚
+  20          
+  21          /*---------变量定义---------*/
+  22          uchar uiLed = 0x00;        //LED灯值寄存
+  23          uchar tmpLed = 0x01;       //LED灯值暂存
+  24          uchar i = 0;               //数码管扫描显示循环
+  25          uint answer=0;             //答案
+  26          uint score=0;              //得分
+  27          uint highest_sc=0;         //最高分
+  28          uint ques=0;               //问题
+  29          uint ques0,ques1,ques2;
+  30          uint ques_flag=0;          //问题标志
+  31          
+  32          
+  33          /*---------引脚别名定义---------*/
+  34          sbit sbtBeep = P3 ^ 4;                  //蜂鸣器引脚
+  35          sbit sbtKey1 = P3 ^ 2;                  //按键1引脚
+  36          sbit sbtKey2 = P3 ^ 3;
+  37          sbit sbtKey3 = P1 ^ 7;
+  38          /*---------变量定义---------*/
+  39          bit btBeepFlag;                        //控制蜂鸣器开关的标志位
+  40          
+  41          /*---------初始化函数--------*/
+  42          void init()
+  43          {
+  44   1          P0M1 = 0x00;
+  45   1          P0M0 = 0xff;
+  46   1          P2M1 = 0x00;
+  47   1          P2M0 = 0x08;
+  48   1          P3M1 = 0x00;
+  49   1          P3M0 = 0x10;                  //设置P3^4为推挽模式
+  50   1      
+  51   1          TMOD = 0x00;                  //设置定时器0，工作方式0，16位自动重装定时器
+  52   1          TH0 = 0xff;                   //设定定时器0的初值
+  53   1          TL0 = 0x03;
+  54   1          EA = 1;                       //打开总中断
+C51 COMPILER V9.51   TEST                                                                  09/09/2020 22:22:16 PAGE 2   
+
+  55   1          ET0 = 1;                      //打开定时器0中断允许位
+  56   1          TR0 = 1;
+  57   1          IT0 = 0;            //设置IT0上升沿触发
+  58   1          IT1 = 0;
+  59   1          btBeepFlag = 0;                //标志位置1
+  60   1          P0 = 0x00;                    //关闭P0端口
+  61   1          sbtBeep = 0;                  //蜂鸣器引脚置0，以保护蜂鸣器
+  62   1          ques_flag=0;
+  63   1          sbtLedSel = 0;  //先选择数码管亮
+  64   1          uiLed = 0x00;
+  65   1      }
+  66          
+  67          /*---------延时子函数--------*/
+  68          void delay( uint n )
+  69          {
+  70   1          while( n-- );
+  71   1      }
+  72          
+  73          
+  74          
+  75          void upload()
+  76          {
+  77   1          uiLed = 0x00;
+  78   1          tmpLed = 0x01; 
+  79   1          ques_flag=0;
+  80   1          answer=P0;
+  81   1          if(answer==ques)
+  82   1          {
+  83   2            score++;
+  84   2            btBeepFlag = ~btBeepFlag;
+  85   2            delay(600);
+  86   2            btBeepFlag = ~btBeepFlag;
+  87   2            if(score==15)
+  88   2            {
+  89   3                btBeepFlag = ~btBeepFlag;
+  90   3                delay(600);
+  91   3                btBeepFlag = ~btBeepFlag;
+  92   3            }
+  93   2          }
+  94   1          else
+  95   1          {
+  96   2              if(score>highest_sc)
+  97   2                  highest_sc=score;
+  98   2              btBeepFlag = ~btBeepFlag;
+  99   2              delay(600);
+ 100   2              btBeepFlag = ~btBeepFlag;
+ 101   2              score=0;
+ 102   2          }
+ 103   1      }
+ 104          
+ 105          /*---------获取AD值子函数--------*/
+ 106          unsigned char GetADC()
+ 107          {
+ 108   1          uchar ucAdcRes;
+ 109   1          ADC_CONTR = cstAdcPower | cstAdcStart | cstAdcSpeed90 | cstAdcChs17;//没有将cstAdcFlag置1，用于判断A/D
+             -是否结束
+ 110   1          _nop_();
+ 111   1          _nop_();
+ 112   1          _nop_();
+ 113   1          _nop_();
+ 114   1          while( !( ADC_CONTR & cstAdcFlag ) ); //等待直到A/D转换结束
+ 115   1          ADC_CONTR &= ~cstAdcFlag;           //cstAdcFlagE软件清0
+C51 COMPILER V9.51   TEST                                                                  09/09/2020 22:22:16 PAGE 3   
+
+ 116   1          ucAdcRes = ADC_RES;                 //获取AD的值
+ 117   1          return ucAdcRes;
+ 118   1      }
+ 119          
+ 120          /*---------获取导航按键值子函数--------*/
+ 121          uchar NavKeyCheck()
+ 122          {
+ 123   1          unsigned char key;
+ 124   1          key = GetADC();     //获取AD的值
+ 125   1          if( key != 255 )    //有按键按下时
+ 126   1          {
+ 127   2              delay(200);
+ 128   2              key = GetADC();
+ 129   2              if( key != 255 )            //按键消抖 仍有按键按下
+ 130   2              {
+ 131   3                  key = key & 0xE0;       //获取高3位，其他位清零
+ 132   3                  key = _cror_( key, 5 ); //循环右移5位 获取A/D转换高三位值，减小误差
+ 133   3                  return key;
+ 134   3              }
+ 135   2          }
+ 136   1          return 0x07;        //没有按键按下时返回值0x07
+ 137   1      }
+ 138          
+ 139          /*---------导航按键处理子函数--------*/
+ 140          void NavKey_Process()
+ 141          {
+ 142   1          uchar ucNavKeyCurrent;  //导航按键当前的状态
+ 143   1          uchar ucNavKeyPast;     //导航按键前一个状态
+ 144   1      
+ 145   1          ucNavKeyCurrent = NavKeyCheck();    //获取当前ADC值
+ 146   1          if( ucNavKeyCurrent != 0x07 )       //导航按键是否被按下 不等于0x07表示有按下
+ 147   1          {
+ 148   2              ucNavKeyPast = ucNavKeyCurrent;
+ 149   2              while( ucNavKeyCurrent != 0x07 )        //等待导航按键松开
+ 150   2                  ucNavKeyCurrent = NavKeyCheck();
+ 151   2      
+ 152   2              switch( ucNavKeyPast )
+ 153   2              {
+ 154   3                  case 0x00 :                     //K3
+ 155   3                      upload();
+ 156   3                      break;
+ 157   3                  case 0x01 :                     //右
+ 158   3                  {
+ 159   4                      if( tmpLed == 0x01 )        //value等于0x80时，重新赋初值0x01
+ 160   4                          tmpLed = 0x80;
+ 161   4                      else
+ 162   4                          tmpLed = tmpLed >> 1;
+ 163   4                      break;
+ 164   4                  }
+ 165   3                  case 0x05 :                     //左
+ 166   3                  {
+ 167   4                      if( tmpLed == 0x80 )        //value等于0x80时，重新赋初值0x01
+ 168   4                          tmpLed = 0x01;
+ 169   4                      else
+ 170   4                          tmpLed = tmpLed << 1;
+ 171   4                      break;
+ 172   4                      
+ 173   4                  }
+ 174   3              }
+ 175   2          }
+ 176   1      }
+ 177          
+C51 COMPILER V9.51   TEST                                                                  09/09/2020 22:22:16 PAGE 4   
+
+ 178          void question()
+ 179          {
+ 180   1          ques=rand()%256;
+ 181   1          ques0=ques%10;
+ 182   1          ques1=ques/10%10;
+ 183   1          ques2=ques/100%10;
+ 184   1      }
+ 185          
+ 186          void print()
+ 187          {
+ 188   1          P2=arrDigitSelect[0];
+ 189   1          P0=arrSegSelect[highest_sc];
+ 190   1          delay( 500 );
+ 191   1          P2=arrDigitSelect[3];
+ 192   1          P0=arrSegSelect[score];
+ 193   1          delay( 500 );
+ 194   1          P2=arrDigitSelect[5];
+ 195   1          P0=arrSegSelect[ques2];
+ 196   1          delay( 500 );
+ 197   1          P2=arrDigitSelect[6];
+ 198   1          P0=arrSegSelect[ques1];
+ 199   1          delay( 500 );
+ 200   1          P2=arrDigitSelect[7];
+ 201   1          P0=arrSegSelect[ques0];
+ 202   1          delay( 500 );
+ 203   1      }
+ 204          /*---------主函数--------*/
+ 205          void main()
+ 206          {
+ 207   1          init();
+ 208   1          while( 1 )
+ 209   1          {
+ 210   2              sbtLedSel = 0;
+ 211   2              if(ques_flag==0)
+ 212   2              {
+ 213   3                  question();
+ 214   3                  ques_flag=1;
+ 215   3              }
+ 216   2              print();
+ 217   2              sbtLedSel = 1;
+ 218   2              P0 = 0x00;
+ 219   2              P0 = uiLed|tmpLed;                     //LED显示
+ 220   2              delay( 100 );                  //延时1ms
+ 221   2              NavKey_Process();
+ 222   2              if( sbtKey1 == 0 )
+ 223   2              {
+ 224   3                  delay( 100 );                     //延时消抖
+ 225   3                  if( sbtKey1 == 0 )
+ 226   3                  {
+ 227   4                      uiLed=uiLed|tmpLed;
+ 228   4                  }
+ 229   3              }
+ 230   2              else if (sbtKey2 ==0)
+ 231   2              {
+ 232   3                delay( 100 );                     //延时消抖
+ 233   3                  if( sbtKey2 == 0 )
+ 234   3                  {
+ 235   4                      tmpLed=tmpLed&0x00;
+ 236   4                  }
+ 237   3              }
+ 238   2          }
+ 239   1      }
+C51 COMPILER V9.51   TEST                                                                  09/09/2020 22:22:16 PAGE 5   
+
+ 240          
+ 241          /*---------T0定时器中断服务处理函数--------*/
+ 242          void T0_Process() interrupt 1
+ 243          {
+ 244   1          if( btBeepFlag )
+ 245   1          {
+ 246   2              sbtBeep = ~sbtBeep;            //产生方波使得蜂鸣器发声
+ 247   2          }
+ 248   1          else
+ 249   1          {
+ 250   2              sbtBeep = 0;                  //停止发声，并将sbtBeep端口置于低电平
+ 251   2          }
+ 252   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    514    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     52    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
