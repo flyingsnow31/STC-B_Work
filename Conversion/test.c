@@ -110,6 +110,7 @@ void upload()
 		{
 			highest_sc = score;
 			highest_er = player;
+			arrListSelect[player]=score;
 			score=0;
 		}
 	}
@@ -123,6 +124,7 @@ void upload()
 		/*btBeepFlag = ~btBeepFlag;
 		delay(600);
 		btBeepFlag = ~btBeepFlag;*/
+		arrListSelect[player]=score;
 		score = 0;
 	}
 }
@@ -365,6 +367,8 @@ void game()
                 uiLed = uiLed ^ tmpLed;
 			}
 		}
+		if(back==1)
+			return;
 		
 		//后加退出方法
     }
